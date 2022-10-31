@@ -30,6 +30,7 @@ from ...registry import register
 from ...utils import execute_unless_result_exists
 from .checks import check_config
 from .models import ZgwConfig
+from .utils import restructure_names_to_zgw
 
 
 class ZaakOptionsSerializer(JsonSchemaSerializerMixin, serializers.Serializer):
@@ -39,6 +40,10 @@ class ZaakOptionsSerializer(JsonSchemaSerializerMixin, serializers.Serializer):
     informatieobjecttype = serializers.URLField(
         required=False,
         help_text=_("URL of the INFORMATIEOBJECTTYPE in the Catalogi API"),
+    )
+    registrator_roltype = serializers.URLField(
+        required=False,
+        help_text=_("URL of the ROLTYPE of the registrator in the Catalogi API"),
     )
     organisatie_rsin = serializers.CharField(
         required=False,
@@ -119,6 +124,9 @@ class ZGWRegistration(BasePlugin):
         ),
         # This field is not part of the StUF-ZDS standard.
         "betrokkeneIdentificatie._kvk": FieldConf(submission_auth_info_attribute="kvk"),
+        "betrokkeneIdentificatie._employee_id": FieldConf(
+            submission_auth_info_attribute="employee_id"
+        ),
     }
 
     zaak_mapping = {
@@ -191,6 +199,32 @@ class ZGWRegistration(BasePlugin):
             partial(create_rol, zaak, rol_data, options), submission, "intermediate.rol"
         )
 
+        if submission.has_registrator:
+            info = {
+                "identificatie": submission.registrator.value,
+            }
+            registrator_data = {
+                "betrokkeneType": "medewerker",
+                "betrokkeneIdentificatie": info,
+                "omschrijvingGeneriek": "medewerker",
+            }
+            if submission.registrator.user:
+                (
+                    info["voorletters"],
+                    info["voorvoegselAchternaam"],
+                    info["achternaam"],
+                ) = restructure_names_to_zgw(
+                    submission.registrator.user.first_name,
+                    submission.registrator.user.last_name,
+                )
+            registrator_rol = execute_unless_result_exists(
+                partial(create_rol, zaak, registrator_data, options),
+                submission,
+                "intermediate.rol-medewerker",
+            )
+        else:
+            registrator_rol = None
+
         status = execute_unless_result_exists(
             partial(create_status, zaak), submission, "intermediate.status"
         )
@@ -219,6 +253,7 @@ class ZGWRegistration(BasePlugin):
             "document": document,
             "status": status,
             "rol": rol,
+            "registrator": registrator_rol,
         }
         return result
 

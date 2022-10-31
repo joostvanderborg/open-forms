@@ -12,7 +12,7 @@ from openforms.submissions.signals import submission_complete, submission_start
 
 from .constants import FORM_AUTH_SESSION_KEY, REGISTRATOR_SUBJECT_SESSION_KEY
 from .registry import register
-from .utils import store_auth_details, store_registrator_details
+from .utils import FormAuth, store_auth_details, store_registrator_details
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +41,12 @@ def set_auth_attribute_on_session(
     sender, instance: Submission, request: Request, **kwargs
 ):
     # form_auth has information from an authentication backend, so could be a client or employee
-    form_auth = request.session.get(FORM_AUTH_SESSION_KEY)
+    form_auth: FormAuth = request.session.get(FORM_AUTH_SESSION_KEY)
 
     # registrator_subject might have additional info about the client entered by an employee
-    registrator_subject = request.session.get(REGISTRATOR_SUBJECT_SESSION_KEY)
+    registrator_subject: RegistratorSubject = request.session.get(
+        REGISTRATOR_SUBJECT_SESSION_KEY
+    )
 
     if not form_auth:
         if instance.form.login_required:
@@ -94,15 +96,21 @@ def set_auth_attribute_on_session(
             auth_save = {
                 "value": registrator_subject["value"],
                 "attribute": registrator_subject["attribute"],
-                # TODO we don't have a plugin to define here? things break if this doesn't exist (like the logout view)
                 "plugin": registrator_subject.get("plugin", "registrator"),
+                "machtigen": None,
             }
             registrator_save = {
                 "value": form_auth["value"],
                 "attribute": form_auth["attribute"],
                 "plugin": form_auth["plugin"],
+                "user": user,
             }
-            # TODO the "machtigingen" key dispeared
+            if form_auth.get("machtigen"):
+                logger.warning(
+                    "Submission '%s' has a 'machtigen' key in the form_auth session data of the registrator,"
+                    " which is lost after transferring the information to the registrator info.",
+                    instance.uuid,
+                )
             store_auth_details(instance, auth_save)
             store_registrator_details(instance, registrator_save)
     else:

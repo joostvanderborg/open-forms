@@ -109,10 +109,11 @@ class SubmissionFactory(factory.django.DjangoModelFactory):
         bsn = kwargs.pop("bsn", None)
         kvk = kwargs.pop("kvk", None)
         pseudo = kwargs.pop("pseudo", None)
+        employee_id = kwargs.pop("employee_id", None)
         auth_plugin = kwargs.pop("auth_plugin", None)
 
         submission = cls.create(**kwargs)
-        if bsn or kvk or pseudo:
+        if bsn or kvk or pseudo or employee_id:
             from openforms.authentication.constants import AuthAttribute
             from openforms.authentication.tests.factories import AuthInfoFactory
 
@@ -121,9 +122,11 @@ class SubmissionFactory(factory.django.DjangoModelFactory):
                 attribute = AuthAttribute.kvk
             elif pseudo:
                 attribute = AuthAttribute.pseudo
+            elif employee_id:
+                attribute = AuthAttribute.employee_id
 
             attrs = {
-                "value": bsn or kvk or pseudo,
+                "value": bsn or kvk or pseudo or employee_id,
                 "attribute": attribute,
                 "submission": submission,
             }

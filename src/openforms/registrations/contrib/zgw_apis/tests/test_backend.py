@@ -10,6 +10,11 @@ from zds_client.oas import schema_fetcher
 from zgw_consumers.test import generate_oas_component
 from zgw_consumers.test.schema_mock import mock_service_oas_get
 
+from openforms.accounts.tests.factories import UserFactory
+from openforms.authentication.tests.factories import (
+    AuthInfoFactory,
+    RegistratorInfoFactory,
+)
 from openforms.submissions.constants import RegistrationStatuses
 from openforms.submissions.models import SubmissionStep
 from openforms.submissions.tests.factories import (
@@ -23,6 +28,18 @@ from ....service import extract_submission_reference
 from ....tasks import register_submission
 from ..plugin import ZGWRegistration
 from .factories import ZgwConfigFactory
+
+
+def _print_history(m):
+    print("--- --- ---")
+    for s in __dump_history(m):
+        print(s)
+    print("--- --- ---")
+
+
+def __dump_history(m):
+    for i, req in enumerate(m.request_history, start=0):
+        yield f"{str(i).ljust(3)} {req.method.ljust(5)} {req.url}"
 
 
 @temp_private_root()
@@ -121,12 +138,38 @@ class ZGWBackendTests(TestCase):
                 ],
             },
         )
+        m.get(
+            "https://catalogus.nl/api/v1/roltypen?zaaktype=https%3A%2F%2Fcatalogi.nl%2Fapi%2Fv1%2Fzaaktypen%2F1&omschrijvingGeneriek=medewerker",
+            status_code=200,
+            json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    generate_oas_component(
+                        "catalogi",
+                        "schemas/RolType",
+                        url="https://catalogus.nl/api/v1/roltypen/2",
+                    )
+                ],
+            },
+        )
         m.post(
             "https://zaken.nl/api/v1/rollen",
-            status_code=201,
-            json=generate_oas_component(
-                "zaken", "schemas/Rol", url="https://zaken.nl/api/v1/rollen/1"
-            ),
+            [
+                {
+                    "status_code": 201,
+                    "json": generate_oas_component(
+                        "zaken", "schemas/Rol", url="https://zaken.nl/api/v1/rollen/1"
+                    ),
+                },
+                {
+                    "status_code": 201,
+                    "json": generate_oas_component(
+                        "zaken", "schemas/Rol", url="https://zaken.nl/api/v1/rollen/2"
+                    ),
+                },
+            ],
         )
         m.get(
             "https://catalogus.nl/api/v1/statustypen?zaaktype=https%3A%2F%2Fcatalogi.nl%2Fapi%2Fv1%2Fzaaktypen%2F1",
@@ -318,7 +361,7 @@ class ZGWBackendTests(TestCase):
         create_rol_body = create_rol.json()
         self.assertEqual(create_rol.method, "POST")
         self.assertEqual(create_rol.url, "https://zaken.nl/api/v1/rollen")
-        self.assertEqual(create_zio_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
+        self.assertEqual(create_rol_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
         self.assertEqual(
             create_rol_body["roltype"],
             "https://catalogus.nl/api/v1/roltypen/1",
@@ -665,7 +708,7 @@ class ZGWBackendTests(TestCase):
         create_rol_body = create_rol.json()
         self.assertEqual(create_rol.method, "POST")
         self.assertEqual(create_rol.url, "https://zaken.nl/api/v1/rollen")
-        self.assertEqual(create_zio_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
+        self.assertEqual(create_rol_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
         self.assertEqual(
             create_rol_body["roltype"],
             "https://catalogus.nl/api/v1/roltypen/1",
@@ -892,6 +935,146 @@ class ZGWBackendTests(TestCase):
         self.assertEqual(
             document_create_attachment2_body["informatieobjecttype"],
             "https://catalogi.nl/api/v1/informatieobjecttypen/1",
+        )
+
+    def test_submission_with_zgw_with_registrator(self, m):
+        submission = SubmissionFactory.from_components(
+            [
+                {
+                    "key": "voornaam",
+                    "registration": {
+                        "attribute": RegistrationAttribute.initiator_voornamen,
+                    },
+                },
+            ],
+            submitted_data={
+                "voornaam": "Foo",
+            },
+            completed=True,
+        )
+        user = UserFactory(first_name="Reggie", last_name="Von Bar")
+        AuthInfoFactory(submission=submission)
+        RegistratorInfoFactory(submission=submission, user=user, value="my_employee_id")
+
+        zgw_form_options = dict(
+            zaaktype="https://catalogi.nl/api/v1/zaaktypen/1",
+            informatieobjecttype="https://catalogi.nl/api/v1/informatieobjecttypen/1",
+            organisatie_rsin="000000000",
+            vertrouwelijkheidaanduiding="openbaar",
+            registrator_roltype="https://catalogi.nl/api/v1/roltypes/123",
+        )
+
+        self.install_mocks(m)
+
+        plugin = ZGWRegistration("zgw")
+        result = plugin.register_submission(submission, zgw_form_options)
+        self.assertEqual(
+            result["document"]["url"],
+            "https://documenten.nl/api/v1/enkelvoudiginformatieobjecten/1",
+        )
+        self.assertEqual(result["rol"]["url"], "https://zaken.nl/api/v1/rollen/1")
+        self.assertEqual(
+            result["registrator"]["url"], "https://zaken.nl/api/v1/rollen/2"
+        )
+        self.assertEqual(result["status"]["url"], "https://zaken.nl/api/v1/statussen/1")
+        self.assertEqual(result["zaak"]["url"], "https://zaken.nl/api/v1/zaken/1")
+        self.assertEqual(
+            result["zaak"]["zaaktype"], "https://catalogi.nl/api/v1/zaaktypen/1"
+        )
+
+        _print_history(m)
+
+        create_zaak = m.request_history[1]
+        create_zaak_body = create_zaak.json()
+        self.assertNotIn("kenmerken", create_zaak_body)
+        self.assertEqual(create_zaak.method, "POST")
+        self.assertEqual(create_zaak.url, "https://zaken.nl/api/v1/zaken")
+        self.assertEqual(create_zaak_body["bronorganisatie"], "000000000")
+        self.assertEqual(
+            create_zaak_body["verantwoordelijkeOrganisatie"],
+            "000000000",
+        )
+        self.assertEqual(
+            create_zaak_body["vertrouwelijkheidaanduiding"],
+            "openbaar",
+        )
+        self.assertEqual(
+            create_zaak_body["zaaktype"], "https://catalogi.nl/api/v1/zaaktypen/1"
+        )
+        self.assertEqual(create_zaak_body["betalingsindicatie"], "nvt")
+
+        create_eio = m.request_history[3]
+        create_eio_body = create_eio.json()
+        self.assertEqual(create_eio.method, "POST")
+        self.assertEqual(
+            create_eio.url,
+            "https://documenten.nl/api/v1/enkelvoudiginformatieobjecten",
+        )
+        self.assertEqual(create_eio_body["bronorganisatie"], "000000000")
+        self.assertEqual(create_eio_body["formaat"], "application/pdf")
+        self.assertEqual(
+            create_eio_body["vertrouwelijkheidaanduiding"],
+            "openbaar",
+        )
+        self.assertEqual(
+            create_eio_body["informatieobjecttype"],
+            "https://catalogi.nl/api/v1/informatieobjecttypen/1",
+        )
+
+        create_zio = m.request_history[4]
+        create_zio_body = create_zio.json()
+        self.assertEqual(create_zio.method, "POST")
+        self.assertEqual(
+            create_zio.url, "https://zaken.nl/api/v1/zaakinformatieobjecten"
+        )
+        self.assertEqual(create_zio_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
+        self.assertEqual(
+            create_zio_body["informatieobject"],
+            "https://documenten.nl/api/v1/enkelvoudiginformatieobjecten/1",
+        )
+
+        create_rol = m.request_history[7]
+        create_rol_body = create_rol.json()
+        self.assertEqual(create_rol.method, "POST")
+        self.assertEqual(create_rol.url, "https://zaken.nl/api/v1/rollen")
+        self.assertEqual(create_rol_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
+        self.assertEqual(
+            create_rol_body["roltype"],
+            "https://catalogus.nl/api/v1/roltypen/1",
+        )
+        self.assertEqual(
+            create_rol_body["betrokkeneIdentificatie"],
+            {"inpBsn": "123456782", "voornamen": "Foo"},
+        )
+
+        create_registrator = m.request_history[9]
+        create_registrator_body = create_registrator.json()
+        self.assertEqual(create_registrator.method, "POST")
+        self.assertEqual(create_registrator.url, "https://zaken.nl/api/v1/rollen")
+        self.assertEqual(
+            create_registrator_body["zaak"], "https://zaken.nl/api/v1/zaken/1"
+        )
+        self.assertEqual(
+            create_registrator_body["roltype"],
+            "https://catalogus.nl/api/v1/roltypen/2",
+        )
+        self.assertEqual(
+            create_registrator_body["betrokkeneIdentificatie"],
+            {
+                "identificatie": "my_employee_id",
+                "voorletters": "R",
+                "voorvoegselAchternaam": "von",
+                "achternaam": "Bar",
+            },
+        )
+        create_status = m.request_history[11]
+        create_status_body = create_status.json()
+        self.assertEqual(create_status.method, "POST")
+        self.assertEqual(create_status.url, "https://zaken.nl/api/v1/statussen")
+        self.assertEqual(create_status_body["zaak"], "https://zaken.nl/api/v1/zaken/1")
+        self.assertEqual(
+            create_status_body["statustype"],
+            "https://catalogus.nl/api/v1/statustypen/1",
         )
 
 

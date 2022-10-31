@@ -50,6 +50,14 @@ class ZgwConfig(SingletonModel):
         blank=True,
         help_text=_("Default URL of the INFORMATIEOBJECTTYPE in the Catalogi API"),
     )
+    registrator_roltype = models.URLField(
+        _("registrator roltype"),
+        max_length=1000,
+        blank=True,
+        help_text=_(
+            "Default URL of the ROLTYPE of the registrator in the Catalogi API"
+        ),
+    )
     organisatie_rsin = models.CharField(
         _("organisation RSIN"),
         max_length=9,
@@ -65,6 +73,7 @@ class ZgwConfig(SingletonModel):
         options.setdefault("zaaktype", self.zaaktype)
         options.setdefault("informatieobjecttype", self.informatieobjecttype)
         options.setdefault("organisatie_rsin", self.organisatie_rsin)
+        options.setdefault("registrator_roltype", self.registrator_roltype)
 
     def clean(self):
         super().clean()

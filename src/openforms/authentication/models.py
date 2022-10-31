@@ -98,6 +98,13 @@ class RegistratorInfo(BaseAuthInfo):
         help_text=_("Submission related to this authentication information"),
         related_name="_registrator",
     )
+    user = models.ForeignKey(
+        to="accounts.User",
+        verbose_name=_("User"),
+        on_delete=models.CASCADE,
+        help_text=_("User related to this authentication information"),
+        null=True,
+    )
 
     class Meta:
         verbose_name = _("Registrator authentication details")

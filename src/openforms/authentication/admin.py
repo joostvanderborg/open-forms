@@ -50,6 +50,7 @@ class RegistratorInfoAdminForm(forms.ModelForm):
             "attribute",
             "value",
             "submission",
+            "user",
             "attribute_hashed",
         )
         widgets = {
@@ -72,7 +73,13 @@ class RegistratorInfoInline(admin.TabularInline):
 
 @admin.register(RegistratorInfo)
 class RegistratorInfoAdmin(admin.ModelAdmin):
-    list_display = ("submission", "plugin", "attribute")
+    list_display = ("submission", "plugin", "attribute", "user")
     list_filter = ("plugin", "attribute")
-    search_fields = ("submission__pk",)
-    raw_id_fields = ("submission",)
+    search_fields = (
+        "submission__pk",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+    )
+    raw_id_fields = ("submission", "user")

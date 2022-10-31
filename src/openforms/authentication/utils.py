@@ -1,4 +1,4 @@
-from typing import Literal, Optional, TypedDict
+from typing import Literal, Optional, TypedDict, Union
 
 from openforms.submissions.models import Submission
 
@@ -15,6 +15,13 @@ class BaseAuth(TypedDict):
         AuthAttribute.employee_id,
     ]
     value: str
+
+
+class SkipSubjectInfo(TypedDict):
+    skip_subject_info: bool
+
+
+RegistratorSubject = Union[BaseAuth, SkipSubjectInfo]
 
 
 class FormAuth(BaseAuth):

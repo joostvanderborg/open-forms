@@ -617,6 +617,13 @@ paths:
   /api/v2/form-definitions:
     get:
       operationId: form_definitions_list
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `translations`
       summary: List form step definitions
       parameters:
       - name: page
@@ -647,6 +654,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     post:
       operationId: form_definitions_create
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `translations`
       summary: Create a form definition
       tags:
       - forms
@@ -677,6 +691,13 @@ paths:
   /api/v2/form-definitions/{uuid}:
     get:
       operationId: form_definitions_retrieve
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `translations`
       summary: Retrieve form step definition details
       parameters:
       - in: path
@@ -707,6 +728,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     put:
       operationId: form_definitions_update
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `translations`
       summary: Update all details of a form definition
       parameters:
       - in: path
@@ -743,6 +771,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     patch:
       operationId: form_definitions_partial_update
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `translations`
       summary: Update some details of a form definition
       parameters:
       - in: path
@@ -778,6 +813,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     delete:
       operationId: form_definitions_destroy
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `translations`
       summary: Delete a form definition
       parameters:
       - in: path
@@ -1051,6 +1093,13 @@ paths:
   /api/v2/forms/{form_uuid_or_slug}/steps:
     get:
       operationId: forms_steps_list
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `literals.translations`
       summary: List form steps
       parameters:
       - in: path
@@ -1082,6 +1131,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     post:
       operationId: forms_steps_create
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `literals.translations`
       summary: Create a form step
       parameters:
       - in: path
@@ -1124,6 +1180,13 @@ paths:
   /api/v2/forms/{form_uuid_or_slug}/steps/{uuid}:
     get:
       operationId: forms_steps_retrieve
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `literals.translations`
       summary: Retrieve form step details
       parameters:
       - in: path
@@ -1159,6 +1222,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     put:
       operationId: forms_steps_update
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `literals.translations`
       summary: Update all details of a form step
       parameters:
       - in: path
@@ -1206,6 +1276,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     patch:
       operationId: forms_steps_partial_update
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `literals.translations`
       summary: Update some details of a form step
       parameters:
       - in: path
@@ -1252,6 +1329,13 @@ paths:
               $ref: '#/components/headers/X-Is-Form-Designer'
     delete:
       operationId: forms_steps_destroy
+      description: |-
+        **Warning: the response data depends on user permissions**
+
+        Non-staff users receive a subset of the documented fields which are used
+        for internal form configuration. These fields are:
+
+        - `literals.translations`
       summary: Delete a form step
       parameters:
       - in: path
@@ -4930,6 +5014,8 @@ components:
           type: string
           description: The content of the email message can contain variables that
             will be templated from the submitted form data.
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
     ContextAwareFormStep:
       type: object
       properties:
@@ -5205,6 +5291,8 @@ components:
         requiredFieldsWithAsterisk:
           type: boolean
           readOnly: true
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
       required:
       - loginOptions
       - loginRequired
@@ -5280,6 +5368,8 @@ components:
         isReusable:
           type: boolean
           description: Allow this definition to be re-used in multiple forms
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
       required:
       - configuration
       - name
@@ -5317,6 +5407,8 @@ components:
         isReusable:
           type: boolean
           description: Allow this definition to be re-used in multiple forms
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
         usedIn:
           type: array
           items:
@@ -5491,6 +5583,8 @@ components:
           $ref: '#/components/schemas/ButtonText'
         nextText:
           $ref: '#/components/schemas/ButtonText'
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
     FormVariable:
       type: object
       properties:
@@ -5866,6 +5960,18 @@ components:
       - slug
       - url
       - uuid
+    ModelTranslations:
+      type: object
+      properties:
+        nl:
+          type: object
+          additionalProperties: {}
+        en:
+          type: object
+          additionalProperties: {}
+      required:
+      - en
+      - nl
     NestedSubmissionPaymentDetail:
       type: object
       properties:
@@ -6105,6 +6211,8 @@ components:
         requiredFieldsWithAsterisk:
           type: boolean
           readOnly: true
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
     PatchedFormDefinition:
       type: object
       properties:
@@ -6137,6 +6245,8 @@ components:
         isReusable:
           type: boolean
           description: Allow this definition to be re-used in multiple forms
+        translations:
+          $ref: '#/components/schemas/ModelTranslations'
     PatchedFormStep:
       type: object
       properties:

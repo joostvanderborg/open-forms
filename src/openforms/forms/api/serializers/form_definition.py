@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from openforms.formio.service import update_configuration_for_request
+from openforms.translations.api.serializers import ModelTranslationsSerializer
 
 from ...models import Form, FormDefinition
 from ...validators import validate_form_definition_is_reusable
@@ -48,6 +49,8 @@ class UsedInFormSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class FormDefinitionSerializer(serializers.HyperlinkedModelSerializer):
+    translations = ModelTranslationsSerializer(required=False)
+
     def to_representation(self, instance):
         representation = super().to_representation(instance=instance)
         # set upload urls etc
@@ -69,6 +72,7 @@ class FormDefinitionSerializer(serializers.HyperlinkedModelSerializer):
             "configuration",
             "login_required",
             "is_reusable",
+            "translations",
         )
         extra_kwargs = {
             "url": {

@@ -231,7 +231,7 @@ class SubmissionStepValidationTests(SubmissionsMixin, APITestCase):
                     "step_uuid": step.uuid,
                 },
             ),
-            {"data": {"postcode": "4505 XY", "birthdate": "1999-01-01"}},
+            {"data": {"postcode": "4505 XY", "birthdate": "1999-01-01T00:00:00+01:00"}},
         )
 
         self.assertEqual(status.HTTP_201_CREATED, response.status_code)
@@ -239,5 +239,6 @@ class SubmissionStepValidationTests(SubmissionsMixin, APITestCase):
             SubmissionValueVariable.objects.get(key="postcode").value, "4505 XY"
         )
         self.assertEqual(
-            SubmissionValueVariable.objects.get(key="birthdate").value, "1999-01-01"
+            SubmissionValueVariable.objects.get(key="birthdate").value,
+            "1999-01-01T00:00:00+01:00",
         )

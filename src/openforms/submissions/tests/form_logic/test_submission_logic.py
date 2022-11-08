@@ -257,7 +257,7 @@ class CheckLogicSubmissionTest(SubmissionsMixin, APITestCase):
             json_logic_trigger={
                 "<": [
                     {"date": {"var": "dateOfBirth"}},
-                    {"date": "2021-01-01"},
+                    {"date": "2021-01-01T00:00:00+01:00"},
                 ]
             },
             actions=[
@@ -422,7 +422,7 @@ class CheckLogicSubmissionTest(SubmissionsMixin, APITestCase):
         SubmissionStepFactory.create(
             submission=submission,
             form_step=form_step1,
-            data={"dateOfBirth": "2003-01-01"},
+            data={"dateOfBirth": "2003-01-01T00:00:00+01:00"},
         )
         endpoint = reverse(
             "api:submission-steps-logic-check",
@@ -430,7 +430,7 @@ class CheckLogicSubmissionTest(SubmissionsMixin, APITestCase):
         )
         self._add_submission_to_session(submission)
 
-        with freeze_time("2015-10-10"):
+        with freeze_time("2015-10-10T00:00:00+01:00"):
             response = self.client.post(
                 endpoint, {"data": submission.get_merged_data()}
             )
@@ -898,7 +898,10 @@ class EvaluateLogicSubmissionTest(SubmissionsMixin, APITestCase):
         FormLogicFactory.create(
             form=form,
             json_logic_trigger={
-                ">": [{"date": {"var": "birthdate"}}, {"date": "2022-06-20"}]
+                ">": [
+                    {"date": {"var": "birthdate"}},
+                    {"date": "2022-06-20T00:00:00+01:00"},
+                ]
             },
             actions=[
                 {
@@ -918,7 +921,7 @@ class EvaluateLogicSubmissionTest(SubmissionsMixin, APITestCase):
             form_step=form_step,
             data={
                 "firstname": "foo",
-                "birthdate": "2022-06-21",
+                "birthdate": "2022-06-21T00:00:00+01:00",
             },
         )
 
@@ -954,7 +957,10 @@ class EvaluateLogicSubmissionTest(SubmissionsMixin, APITestCase):
         FormLogicFactory.create(
             form=form,
             json_logic_trigger={
-                ">": [{"date": {"var": "birthdate"}}, {"date": "2022-06-20"}]
+                ">": [
+                    {"date": {"var": "birthdate"}},
+                    {"date": "2022-06-20T00:00:00+01:00"},
+                ]
             },
             actions=[
                 {
@@ -974,7 +980,7 @@ class EvaluateLogicSubmissionTest(SubmissionsMixin, APITestCase):
             form_step=form_step,
             data={
                 "firstname": "foo",
-                "birthdate": "2022-06-19",
+                "birthdate": "2022-06-19T00:00:00+01:00",
             },
         )
 

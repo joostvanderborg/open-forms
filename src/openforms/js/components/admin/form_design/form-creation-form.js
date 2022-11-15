@@ -91,6 +91,27 @@ const initialFormState = {
     confirmationEmailOption: 'global_email',
     explanationTemplate: '',
     autoLoginAuthenticationBackend: '',
+    // TODO dynamic
+    translations: {
+      en: {
+        name: '',
+        changeText: {value: ''},
+        confirmText: {value: ''},
+        previousText: {value: ''},
+        beginText: {value: ''},
+        submissionConfirmationTemplate: '',
+        explanationTemplate: '',
+      },
+      nl: {
+        name: '',
+        changeText: {value: ''},
+        confirmText: {value: ''},
+        previousText: {value: ''},
+        beginText: {value: ''},
+        submissionConfirmationTemplate: '',
+        explanationTemplate: '',
+      },
+    },
   },
   literals: {
     beginText: {

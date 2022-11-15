@@ -64,13 +64,19 @@ def _fetch_prefill_values(
 
         try:
             values = plugin.get_prefill_values(submission, fields)
+            if not values:
+                try:
+                    raise ValueError(f"Empty values for prefill plugin '{plugin_id}'")
+                except ValueError as e:
+                    logger.exception(f"exception in prefill plugin '{plugin_id}'")
+                    logevent.prefill_retrieve_failure(submission, plugin, e)
+                    return plugin_id, values
         except Exception as e:
             logger.exception(f"exception in prefill plugin '{plugin_id}'")
             logevent.prefill_retrieve_failure(submission, plugin, e)
             return plugin_id, {}
         else:
-            if values:
-                logevent.prefill_retrieve_success(submission, plugin, fields)
+            logevent.prefill_retrieve_success(submission, plugin, fields)
             return plugin_id, values
 
     with parallel() as executor:

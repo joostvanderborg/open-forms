@@ -6,6 +6,7 @@ defusedxml
 furl
 glom
 git+https://github.com/maykinmedia/json-logic-py.git@f877f5326231bdcf4621783278f22c8565ec7913#egg=maykin-json-logic-py
+jq
 html5lib
 # see https://github.com/onelogin/python3-saml/issues/292 and
 # https://bugs.launchpad.net/lxml/+bug/1960668 -> we can avoid this by compiling lxml

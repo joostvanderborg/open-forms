@@ -239,6 +239,7 @@ INSTALLED_APPS = [
     "openforms.upgrades",
     "openforms.plugins",
     "openforms.custom_field_types",
+    "openforms.variables",
     # Apps registering static variables
     "openforms.variables.static_variables.apps.StaticVariables",
     "openforms.authentication.static_variables.apps.AuthStaticVariables",

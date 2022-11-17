@@ -175,9 +175,10 @@ _FORM_ADMIN_FIELDS_MARKDOWN = "\n".join(
         summary=_("Retrieve form details"),
         parameters=[UUID_OR_SLUG_PARAMETER],
         description=_(
-            "Retrieve the details/configuration of a particular form. \n\nFor forms "
-            "that don't have translations enabled, the default language is activated, "
-            "otherwise the browser preferences determine the active language."
+            "Retrieve the details/configuration of a particular form. \n\nIf the form "
+            "doesn't have translations enabled, its default language is forced by "
+            "setting a language cookie and reflected in the Content-Language response "
+            "header. Normal HTTP Content Negotiation rules apply."
         ),
     ),
     create=extend_schema(summary=_("Create form")),
